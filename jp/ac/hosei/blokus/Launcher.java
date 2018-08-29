@@ -23,7 +23,7 @@ public class Launcher {
 				"jp.ac.hosei.blokus.players.SimplePlayer",
 				"jp.ac.hosei.blokus.players.SimplePlayer2",
 				"jp.ac.hosei.blokus.players.SimplePlayer3",
-				// "jp.ac.hosei.blokus.players.SimplePlayer2"
+//				"jp.ac.hosei.blokus.players.SimplePlayer3"
 				"jp.ac.hosei.blokus.players.HumanPlayer"
 		};
 

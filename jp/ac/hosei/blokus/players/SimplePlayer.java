@@ -2,8 +2,12 @@ package jp.ac.hosei.blokus.players;
 
 import jp.ac.hosei.blokus.Piece;
 import jp.ac.hosei.blokus.client.ClientController;
+import java.lang.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SimplePlayer extends ClientController {
+	private Map<Solution, Double> SolutionList = new HashMap();
 	public SimplePlayer() {
 		viewerFlag = false;
 	}
@@ -54,15 +58,25 @@ public class SimplePlayer extends ClientController {
 							Piece piece = Piece.pieces[k];
 
 							Solution solve = findFirst(available, i, j, piece, k);
-							if(solve != null) {
-								return solve;
-							}
 						}
 					}
 				}
 			}
 		}
-		return null;
+		Solution solve = findMostLength(SolutionList);
+		return solve;
+	}
+	
+	protected Solution findMostLength(Map<Solution, Double> SolutionList) {
+		Solution answer = null;
+		for (Solution key : SolutionList.keySet()) {
+			if(SolutionList.get(answer) < SolutionList.get(key)) {
+				answer = key;
+			} else if (answer == null) {
+				answer = key;
+			}
+		}
+		return answer;
 	}
 
 	protected Solution findFirst(int[][] available, int row, int col, Piece piece, int pieceId) {
@@ -76,7 +90,7 @@ public class SimplePlayer extends ClientController {
 			int[][] figure = piece.getFigure(pose);
 			int h = figure.length;
 			int w = figure[0].length;
-
+			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2));
 			for(int i = row - h + 1; i <= row; i++) {
 				if(i < 0 || i + h - 1 >= 20) continue;
 
@@ -84,7 +98,9 @@ public class SimplePlayer extends ClientController {
 					if(j < 0 || j + w - 1 >= 20) continue;
 
 					if(isValid(available, figure, i, j)) {
-						return new Solution(pieceId, pose, j, i);
+						Solution solution = new Solution(pieceId, pose, j, i);
+						SolutionList.put(solution, s);
+						return solution;
 					}
 				}
 			}
