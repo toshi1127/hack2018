@@ -63,6 +63,7 @@ public class SimplePlayer extends ClientController {
 			}
 		}
 		Solution solve = findMostLength(SolutionList);
+		SolutionList = new HashMap();
 		return solve;
 	}
 	
@@ -92,7 +93,8 @@ public class SimplePlayer extends ClientController {
 			int[][] figure = piece.getFigure(pose);
 			int h = figure.length;
 			int w = figure[0].length;
-			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2));
+			double d = w;
+//			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2));
 			for(int i = row - h + 1; i <= row; i++) {
 				if(i < 0 || i + h - 1 >= 20) continue;
 
@@ -101,7 +103,7 @@ public class SimplePlayer extends ClientController {
 
 					if(isValid(available, figure, i, j)) {
 						Solution solution = new Solution(pieceId, pose, j, i);
-						SolutionList.put(solution, s);
+						SolutionList.put(solution, d);
 						return solution;
 					}
 				}
