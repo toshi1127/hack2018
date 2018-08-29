@@ -83,7 +83,7 @@ public class SimplePlayer extends ClientController {
 	}
 
 	protected Solution findFirst(int[][] available, int row, int col, Piece piece, int pieceId) {
-		int width = piece.figure.length;
+		double width = piece.figure.length;
 
 		if(piece.figure[0].length > width) {
 			width = piece.figure[0].length;
@@ -93,8 +93,7 @@ public class SimplePlayer extends ClientController {
 			int[][] figure = piece.getFigure(pose);
 			int h = figure.length;
 			int w = figure[0].length;
-			double d = w;
-//			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2));
+//			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2)); 対角線が長いもの
 			for(int i = row - h + 1; i <= row; i++) {
 				if(i < 0 || i + h - 1 >= 20) continue;
 
@@ -103,7 +102,7 @@ public class SimplePlayer extends ClientController {
 
 					if(isValid(available, figure, i, j)) {
 						Solution solution = new Solution(pieceId, pose, j, i);
-						SolutionList.put(solution, d);
+						SolutionList.put(solution, width);
 						return solution;
 					}
 				}
