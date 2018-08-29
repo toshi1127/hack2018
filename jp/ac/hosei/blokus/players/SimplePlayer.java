@@ -56,7 +56,6 @@ public class SimplePlayer extends ClientController {
 					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
 						if(game.getPlayer(myId).holds(k)) {
 							Piece piece = Piece.pieces[k];
-
 							Solution solve = findFirst(available, i, j, piece, k);
 						}
 					}
@@ -69,13 +68,16 @@ public class SimplePlayer extends ClientController {
 	
 	protected Solution findMostLength(Map<Solution, Double> SolutionList) {
 		Solution answer = null;
+		int count = 0;
 		for (Solution key : SolutionList.keySet()) {
-			if(SolutionList.get(answer) < SolutionList.get(key)) {
+			if (count == 0) {
 				answer = key;
-			} else if (answer == null) {
+				count++;
+			} else if((count != 0) && (SolutionList.get(answer) < SolutionList.get(key))) {
 				answer = key;
 			}
 		}
+		count = 0;
 		return answer;
 	}
 
