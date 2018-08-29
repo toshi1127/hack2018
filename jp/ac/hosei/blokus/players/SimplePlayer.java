@@ -56,7 +56,6 @@ public class SimplePlayer extends ClientController {
 					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
 						if(game.getPlayer(myId).holds(k)) {
 							Piece piece = Piece.pieces[k];
-
 							Solution solve = findFirst(available, i, j, piece, k);
 						}
 					}
@@ -64,23 +63,27 @@ public class SimplePlayer extends ClientController {
 			}
 		}
 		Solution solve = findMostLength(SolutionList);
+		SolutionList = new HashMap();
 		return solve;
 	}
 	
 	protected Solution findMostLength(Map<Solution, Double> SolutionList) {
 		Solution answer = null;
+		int count = 0;
 		for (Solution key : SolutionList.keySet()) {
-			if(SolutionList.get(answer) < SolutionList.get(key)) {
+			if (count == 0) {
 				answer = key;
-			} else if (answer == null) {
+				count++;
+			} else if((count != 0) && (SolutionList.get(answer) < SolutionList.get(key))) {
 				answer = key;
 			}
 		}
+		count = 0;
 		return answer;
 	}
 
 	protected Solution findFirst(int[][] available, int row, int col, Piece piece, int pieceId) {
-		int width = piece.figure.length;
+		double width = piece.figure.length;
 
 		if(piece.figure[0].length > width) {
 			width = piece.figure[0].length;
@@ -90,7 +93,7 @@ public class SimplePlayer extends ClientController {
 			int[][] figure = piece.getFigure(pose);
 			int h = figure.length;
 			int w = figure[0].length;
-			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2));
+//			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2)); 対角線が長いもの
 			for(int i = row - h + 1; i <= row; i++) {
 				if(i < 0 || i + h - 1 >= 20) continue;
 
@@ -99,7 +102,7 @@ public class SimplePlayer extends ClientController {
 
 					if(isValid(available, figure, i, j)) {
 						Solution solution = new Solution(pieceId, pose, j, i);
-						SolutionList.put(solution, s);
+						SolutionList.put(solution, width);
 						return solution;
 					}
 				}
