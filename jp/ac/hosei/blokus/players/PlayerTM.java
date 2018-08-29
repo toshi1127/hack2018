@@ -44,7 +44,7 @@ public class PlayerTM extends ClientController {
 		if (countFilledBlocks(board)<=40) {// 序盤
 			first = findFirst(myId,available);
 		}else if (countFilledBlocks(board)<=80) {// 中盤/適当．あとで直す
-			first = findFirst(myId,available);
+			first = findMiddleSolution(myId,available);
 		}else {// 終盤
 			first = findFirst(myId,available);
 		}
@@ -60,8 +60,29 @@ public class PlayerTM extends ClientController {
 			// System.out.println(String.format("pass,%d", myId));
 		}
 	}
-
+	
 	protected Solution findFirst(int myId, int[][] available) {
+ 		for(int i = 0; i < 20; i++) {
+			for(int j = 0; j < 20; j++) {
+				// corner positions are very important to find a solutino
+				if(available[i][j] == 2) {
+					// decending order of the sizes of pieces
+					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+						if(game.getPlayer(myId).holds(k)) {
+							Piece piece = Piece.pieces[k];
+ 							Solution solve = findFirst(available, i, j, piece, k);
+							if(solve != null) {
+								return solve;
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	protected Solution findMiddleSolution(int myId, int[][] available) {
 
 		for(int i = 0; i < 20; i++) {
 			for(int j = 0; j < 20; j++) {
