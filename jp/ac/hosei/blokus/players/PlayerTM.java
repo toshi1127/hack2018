@@ -44,14 +44,24 @@ public class PlayerTM extends ClientController {
 		}
 
 		Solution first;
-		if (countFilledBlocks(board)<=60) {// 序盤
+		if (countFilledBlocks(board) == 0) {
+			count = 0;
+		}
+		if (countFilledBlocks(board)<70) {// 序盤
+			System.out.println("序盤");
+			System.out.println(count);
 			first = findFirst(myId, available, board); 
 //			first = findDistant(myId,available);
-		}else if (countFilledBlocks(board)>60) {// 中盤/適当．あとで直す
-//			first = findMiddleSolution(myId,available);
-			first = findDistant(myId,available);
+		}else if (countFilledBlocks(board)>=70 || count >= 4) {// 中盤/適当．あとで直す
+			System.out.println("中盤");
+			System.out.println(count);
+			first = findDistant(myId,available); //遠くてかつ長いのを出す
+			if(count > 12) {
+				first = findDistant2(myId,available);
+			}
+//			first = findDistant2(myId,available); //遠いいところに出す
 		}else {// 終盤
-			first = findDistant(myId,available);
+			first = findDistant2(myId,available);
 		}
 
 		// viewer.waitForPoint();
@@ -110,7 +120,9 @@ public class PlayerTM extends ClientController {
 			        	return findDistant(myId,available);
 			        }
 
-		       } 
+		       } else if(count >=4) {
+		    	   return findDistant(myId,available);
+		       }
 		      } 
 
 		     } 
@@ -128,33 +140,34 @@ public class PlayerTM extends ClientController {
 			for(int j = 0; j < 20; j++) {
 				if(available[i][j] == 2) {
 					// decending order of the sizes of pieces
-					if( i + j == 19) {
+					if(i < 8 && j > 10) {
 						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
 							if(game.getPlayer(myId).holds(k)) {
 								Piece piece = Piece.pieces[k];
-								Solution solve = findFirst(available, i, j, piece, k);
-								if(solve != null) {
-									return solve;
-								} else {
-									if( i > j) {
-										// iが19から
-										for(int I=0;I<19;I++) {
-											for(int J=19;J>0;J--) {
+								if( i > j) {
+									// iが19から
+									for(int I=0;I<19;I++) {
+										for(int J=19;J>0;J--) {
+											if(J > 10) {
 												Solution Solve =findI(I, available, J, piece, k);
 												if(Solve != null) {
-													return Solve;
-												} else {
-													continue;
-												}
+//													return Solve;
+												} 
+											}else {
+												continue;
 											}
 										}
-									} else if( j > i ) {
-										// jが19から
-										for(int J=19;J>0;J--) {
-											Solution Solve = findJ(J, available, i, piece, k);
-											if(Solve != null) {
-												return Solve;
-											} else {
+									}
+								} else if( j > i ) {
+									// jが19から
+									for(int J=19;J>0;J--) {
+										for(int I=0;I<19;I++) {
+											if(I < 10) {
+												Solution Solve =findI(I, available, J, piece, k);
+												if(Solve != null) {
+//													return Solve;
+												} 
+											}else {
 												continue;
 											}
 										}
@@ -163,19 +176,18 @@ public class PlayerTM extends ClientController {
 							}
 						}
 					} else {
-						System.out.println("hello");
 						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
 						  if(game.getPlayer(myId).holds(k)) {
 							Piece piece = Piece.pieces[k];
-							System.out.println("qqqqqqqq");
 							if( i > j) {
-								System.out.println("hello2");
 								// iが19から
 								for(int I=0;I<19;I++) {
 									for(int J=19;J>0;J--) {
-										Solution Solve =findI(I, available, J, piece, k);
-										if(Solve != null) {
-											return Solve;
+										if(I < 10) {
+											Solution Solve =findI(I, available, J, piece, k);
+											if(Solve != null) {
+//												return Solve;
+											} 
 										} else {
 											continue;
 										}
@@ -183,13 +195,16 @@ public class PlayerTM extends ClientController {
 								}
 							} else if( j > i ) {
 								// jが19から
-								System.out.println("hello3");
 								for(int J=19;J>0;J--) {
-									Solution Solve = findJ(J, available, i, piece, k);
-									if(Solve != null) {
-										return Solve;
-									} else {
-										continue;
+									for(int I=0;I<19;I++) {
+										if(I < 10) {
+											Solution Solve =findI(I, available, J, piece, k);
+											if(Solve != null) {
+//												return Solve;
+											} 
+										}else {
+											continue;
+										}
 									}
 								}
 							}
@@ -199,36 +214,82 @@ public class PlayerTM extends ClientController {
 				}
 			}
 		}
-		return null;
+		Solution solve = findMostLength(SolutionList);
+		SolutionList = new HashMap();
+		count++;
+		return solve;
 	}
 	
-	protected Solution findI(int i, int[][] available, int j, Piece piece, int pieceId) {
-		return findFirst(available, i++, j--, piece, pieceId);
-	}
-	
-	protected Solution findJ(int j, int[][] available, int i, Piece piece, int pieceId) {
-		return findFirst(available, j--, i++, piece, pieceId);
-	}
-
-	protected Solution findMiddleSolution(int myId, int[][] available) {
-
-		for(int i = 0; i < 20; i++) {
+	protected Solution findDistant2(int myId, int[][] available) {
+ 		for(int i = 0; i < 20; i++) {
 			for(int j = 0; j < 20; j++) {
-				// corner positions are very important to find a solutino
 				if(available[i][j] == 2) {
 					// decending order of the sizes of pieces
-					if( i + j == 19) {
-						System.out.println("hello");
+					if(i < 8 && j > 10) {
 						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
 							if(game.getPlayer(myId).holds(k)) {
 								Piece piece = Piece.pieces[k];
-								Solution solve = findFirst(available, i, j, piece, k);
+								if( i > j) {
+									// iが19から
+									for(int I=0;I<19;I++) {
+										for(int J=19;J>0;J--) {
+												Solution Solve =findI(I, available, J, piece, k);
+												if(Solve != null) {
+//													return Solve;
+												} 
+											else {
+												continue;
+											}
+										}
+									}
+								} else if( j > i ) {
+									// jが19から
+									for(int J=19;J>0;J--) {
+										for(int I=0;I<19;I++) {
+												Solution Solve =findI(I, available, J, piece, k);
+												if(Solve != null) {
+//													return Solve;
+												} 
+											else {
+												continue;
+											}
+										}
+									}
+								}
 							}
 						}
-						if( i > j) {
-							// iが19から0
-						} else if( j > i ) {
-							// jが19から0
+					} else {
+						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+						  if(game.getPlayer(myId).holds(k)) {
+							Piece piece = Piece.pieces[k];
+							if( i > j) {
+								// iが19から
+								for(int I=0;I<19;I++) {
+									for(int J=19;J>0;J--) {
+											Solution Solve =findI(I, available, J, piece, k);
+											if(Solve != null) {
+//												return Solve;
+											} 
+										else {
+											continue;
+										}
+									}
+								}
+							} else if( j > i ) {
+								// jが19から
+								for(int J=19;J>0;J--) {
+									for(int I=0;I<19;I++) {
+											Solution Solve =findI(I, available, J, piece, k);
+											if(Solve != null) {
+//												return Solve;
+											} 
+										else {
+											continue;
+										}
+									}
+								}
+							}
+						  }
 						}
 					}
 				}
@@ -236,7 +297,16 @@ public class PlayerTM extends ClientController {
 		}
 		Solution solve = findMostLength(SolutionList);
 		SolutionList = new HashMap();
+		count++;
 		return solve;
+	}
+	
+	protected Solution findI(int i, int[][] available, int j, Piece piece, int pieceId) {
+		return findFirst(available, i++, j--, piece, pieceId);
+	}
+	
+	protected Solution findJ(int j, int[][] available, int i, Piece piece, int pieceId) {
+		return findFirst(available, i++, j--, piece, pieceId);
 	}
 	
 	protected Solution findMostLength(Map<Solution, Double> SolutionList) {
@@ -368,11 +438,11 @@ public class PlayerTM extends ClientController {
 		}
 		for(int i = 0;i < figureEdge.length;i++) {
 			for (int j = 0;j < figureEdge[i].length;j++) {
-				System.out.print(figureEdge[i][j]+" ");
+//				System.out.print(figureEdge[i][j]+" ");
 			}
-			System.out.println();
+//			System.out.println();
 		}
-		System.out.println();
+//		System.out.println();
 		return figureEdge;
 	}
 	
