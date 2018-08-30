@@ -2,12 +2,15 @@ package jp.ac.hosei.blokus.players;
 
 import jp.ac.hosei.blokus.Piece;
 import jp.ac.hosei.blokus.client.ClientController;
+import jp.ac.hosei.blokus.players.SimplePlayer.Solution;
+
 import java.lang.*;
 import java.util.HashMap;
 import java.util.Map;
 
 public class PlayerTM extends ClientController {
 	private Map<Solution, Double> SolutionList = new HashMap();
+	 public int count = 0; 
 	public PlayerTM() {
 		viewerFlag = false;
 	}
@@ -41,12 +44,14 @@ public class PlayerTM extends ClientController {
 		}
 
 		Solution first;
-		if (countFilledBlocks(board)<=40) {// 序盤
-			first = findFirst(myId,available);
-		}else if (countFilledBlocks(board)<=80) {// 中盤/適当．あとで直す
-			first = findMiddleSolution(myId,available);
+		if (countFilledBlocks(board)<=60) {// 序盤
+			first = findFirst(myId, available, board); 
+//			first = findDistant(myId,available);
+		}else if (countFilledBlocks(board)>60) {// 中盤/適当．あとで直す
+//			first = findMiddleSolution(myId,available);
+			first = findDistant(myId,available);
 		}else {// 終盤
-			first = findFirst(myId,available);
+			first = findDistant(myId,available);
 		}
 
 		// viewer.waitForPoint();
@@ -61,25 +66,148 @@ public class PlayerTM extends ClientController {
 		}
 	}
 	
-	protected Solution findFirst(int myId, int[][] available) {
+	 protected Solution findFirst(int myId, int[][] available, int[][] board) { 
+		  for (int i = 0; i < 20; i++) { 
+		   for (int j = 0; j < 20; j++) { 
+		    // corner positions are very important to find a solutino 
+		    if (available[i][j] == 2) { 
+		     // decending order of the sizes of pieces 
+		     for (int k = Piece.pieces.length - 1; k >= 0; k--) { 
+		      if (game.getPlayer(myId).holds(k)) { 
+		       if (k == 16 && count == 0) { 
+		        Piece piece = Piece.pieces[k]; 
+		        Solution solve = findFirst(available, i, j, piece, k); 
+		        count = count + 1; 
+		        return solve; 
+		       } else if (k == 13 && count == 1 && i + j == 19) { 
+		        System.out.println("2手目"); 
+		        Piece piece = Piece.pieces[k]; 
+		        Solution solve = findFirst(available, i, j, piece, k); 
+		        count = count + 1; 
+		        if (solve != null) { 
+		         return solve; 
+		        } else {
+		        	return findDistant(myId,available);
+		        }
+		         
+		         
+		       } else if (k == 11 && count == 2 && i + j == 19) { 
+		        Piece piece = Piece.pieces[k]; 
+		        Solution solve = findFirst(available, i, j, piece, k); 
+		        count = count + 1; 
+		        if (solve != null) { 
+			         return solve; 
+			        } else {
+			        	return findDistant(myId,available);
+			        }
+		       } else if (k == 19 && count == 3 && i + j == 19) { 
+		        Piece piece = Piece.pieces[k]; 
+		        Solution solve = findFirst(available, i, j, piece, k); 
+		        count = count + 1; 
+		        if (solve != null) { 
+			         return solve; 
+			        } else {
+			        	return findDistant(myId,available);
+			        }
+
+		       } 
+		      } 
+
+		     } 
+		    } 
+		   } 
+		  } 
+		   
+
+		  return null; 
+
+		 } 
+	
+	protected Solution findDistant(int myId, int[][] available) {
  		for(int i = 0; i < 20; i++) {
 			for(int j = 0; j < 20; j++) {
-				// corner positions are very important to find a solutino
 				if(available[i][j] == 2) {
 					// decending order of the sizes of pieces
-					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
-						if(game.getPlayer(myId).holds(k)) {
-							Piece piece = Piece.pieces[k];
- 							Solution solve = findFirst(available, i, j, piece, k);
-							if(solve != null) {
-								return solve;
+					if( i + j == 19) {
+						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+							if(game.getPlayer(myId).holds(k)) {
+								Piece piece = Piece.pieces[k];
+								Solution solve = findFirst(available, i, j, piece, k);
+								if(solve != null) {
+									return solve;
+								} else {
+									if( i > j) {
+										// iが19から
+										for(int I=0;I<19;I++) {
+											for(int J=19;J>0;J--) {
+												Solution Solve =findI(I, available, J, piece, k);
+												if(Solve != null) {
+													return Solve;
+												} else {
+													continue;
+												}
+											}
+										}
+									} else if( j > i ) {
+										// jが19から
+										for(int J=19;J>0;J--) {
+											Solution Solve = findJ(J, available, i, piece, k);
+											if(Solve != null) {
+												return Solve;
+											} else {
+												continue;
+											}
+										}
+									}
+								}
 							}
+						}
+					} else {
+						System.out.println("hello");
+						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+						  if(game.getPlayer(myId).holds(k)) {
+							Piece piece = Piece.pieces[k];
+							System.out.println("qqqqqqqq");
+							if( i > j) {
+								System.out.println("hello2");
+								// iが19から
+								for(int I=0;I<19;I++) {
+									for(int J=19;J>0;J--) {
+										Solution Solve =findI(I, available, J, piece, k);
+										if(Solve != null) {
+											return Solve;
+										} else {
+											continue;
+										}
+									}
+								}
+							} else if( j > i ) {
+								// jが19から
+								System.out.println("hello3");
+								for(int J=19;J>0;J--) {
+									Solution Solve = findJ(J, available, i, piece, k);
+									if(Solve != null) {
+										return Solve;
+									} else {
+										continue;
+									}
+								}
+							}
+						  }
 						}
 					}
 				}
 			}
 		}
 		return null;
+	}
+	
+	protected Solution findI(int i, int[][] available, int j, Piece piece, int pieceId) {
+		return findFirst(available, i++, j--, piece, pieceId);
+	}
+	
+	protected Solution findJ(int j, int[][] available, int i, Piece piece, int pieceId) {
+		return findFirst(available, j--, i++, piece, pieceId);
 	}
 
 	protected Solution findMiddleSolution(int myId, int[][] available) {
@@ -89,10 +217,18 @@ public class PlayerTM extends ClientController {
 				// corner positions are very important to find a solutino
 				if(available[i][j] == 2) {
 					// decending order of the sizes of pieces
-					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
-						if(game.getPlayer(myId).holds(k)) {
-							Piece piece = Piece.pieces[k];
-							Solution solve = findFirst(available, i, j, piece, k);
+					if( i + j == 19) {
+						System.out.println("hello");
+						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+							if(game.getPlayer(myId).holds(k)) {
+								Piece piece = Piece.pieces[k];
+								Solution solve = findFirst(available, i, j, piece, k);
+							}
+						}
+						if( i > j) {
+							// iが19から0
+						} else if( j > i ) {
+							// jが19から0
 						}
 					}
 				}
@@ -130,19 +266,46 @@ public class PlayerTM extends ClientController {
 			int h = figure.length;
 			int w = figure[0].length;
 //			double s = Math.sqrt(Math.pow(h, 2)+Math.pow(w, 2)); 対角線が長いもの
-			for(int i = row - h + 1; i <= row; i++) {
-				if(i < 0 || i + h - 1 >= 20) continue;
+			   if (count == 2) { 
+				    if (pose == 1) { 
+				     int[][] Figure = piece.getFigure(pose); 
 
-				for(int j = col - w + 1; j <= col; j++) {
-					if(j < 0 || j + w - 1 >= 20) continue;
+				     for (int i = row - h + 1; i <= row; i++) { 
+				      if (i < 0 || i + h - 1 >= 20) 
+				       continue; 
 
-					if(isValid(available, figure, i, j)) {
-						Solution solution = new Solution(pieceId, pose, j, i);
-						SolutionList.put(solution, width);
-						return solution;
-					}
-				}
-			}
+				      for (int j = col - w + 1; j <= col; j++) { 
+				       if (j < 0 || j + w - 1 >= 20) 
+				        continue; 
+
+				       if (isValid(available, Figure, i, j)) { 
+				        Solution solution = new Solution(pieceId, pose, j, i); 
+				        SolutionList.put(solution, width); 
+				        return solution; 
+				       } 
+				      } 
+				     } 
+				    } 
+
+				   } else { 
+				    for (int i = row - h + 1; i <= row; i++) { 
+				     if (i < 0 || i + h - 1 >= 20) 
+				      continue; 
+
+				     for (int j = col - w + 1; j <= col; j++) { 
+				      if (j < 0 || j + w - 1 >= 20) 
+				       continue; 
+
+				      if (isValid(available, figure, i, j)) { 
+				       Solution solution = new Solution(pieceId, pose, j, i); 
+				       SolutionList.put(solution, width); 
+				       return solution; 
+				      } 
+				       
+				       
+				     } 
+				    } 
+				   } 
 		}
 
 		return null;

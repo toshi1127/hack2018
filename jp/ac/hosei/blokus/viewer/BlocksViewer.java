@@ -5,7 +5,7 @@ import jp.ac.hosei.blokus.Piece;
 import jp.ac.hosei.blokus.utils.Canvas;
 
 public class BlocksViewer {
-	public static double rate = 0.8;
+	public static double rate = 0.5;
 
 	public static int cellSize = (int)(20 * rate);
 	public static int boardSize = (int)(cellSize * 20);
