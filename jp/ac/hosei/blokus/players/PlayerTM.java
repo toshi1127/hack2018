@@ -3,6 +3,7 @@ package jp.ac.hosei.blokus.players;
 import jp.ac.hosei.blokus.Piece;
 import jp.ac.hosei.blokus.client.ClientController;
 import jp.ac.hosei.blokus.players.SimplePlayer.Solution;
+import java.util.ArrayList;
 
 import java.lang.*;
 import java.util.HashMap;
@@ -56,8 +57,10 @@ public class PlayerTM extends ClientController {
 			System.out.println("中盤");
 			System.out.println(count);
 			first = findDistant(myId,available); //遠くてかつ長いのを出す
-			if(count > 12) {
-				first = findDistant2(myId,available);
+			if(count > 8) {
+				first = findEdgeSolution(myId,available, board);
+			} else if(count > 13) {
+				first = findDistant2(myId,available); //遠いいところに出す
 			}
 //			first = findDistant2(myId,available); //遠いいところに出す
 		}else {// 終盤
@@ -309,6 +312,29 @@ public class PlayerTM extends ClientController {
 		return findFirst(available, i++, j--, piece, pieceId);
 	}
 	
+	// 以降戦略
+		protected Solution findMiddleSolution(int myId, int[][] available) {
+			//防御戦略
+			for(int i = 0; i < 20; i++) {
+				for(int j = 0; j < 20; j++) {
+					// corner positions are very important to find a solutino
+					if(available[i][j] == 2) {
+						// decending order of the sizes of pieces
+						for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+							if(game.getPlayer(myId).holds(k)) {
+								Piece piece = Piece.pieces[k];
+								Solution solve = findFirst(available, i, j, piece, k);
+							}
+						}
+					}
+				}
+			}
+			Solution solve = findMostLength(SolutionList);
+			SolutionList = new HashMap();
+			return solve;
+		}
+
+	
 	protected Solution findMostLength(Map<Solution, Double> SolutionList) {
 		Solution answer = null;
 		int count = 0;
@@ -445,6 +471,219 @@ public class PlayerTM extends ClientController {
 //		System.out.println();
 		return figureEdge;
 	}
+	/**
+	 * 打ち終わったときにエッジが最も多くなるSolutionを返す．
+	 * エッジは，自ブロックが隣接しておらず，エッジの対角が開いている部分のみを抽出した．
+	 * @param myId
+	 * @param available
+	 * @param board
+	 * @return
+	 */
+	protected Solution findEdgeSolution(int myId, int[][] available, int[][]board) {
+		ArrayList<Solution> sols = new ArrayList<Solution>();
+		// 置けるピースを探す
+		for (int i = 0;i < 20;i++) {
+			for (int j = 0;j < 20;j++) {
+				// corner positions are very important to find a solutino
+				if(available[i][j] == 2) {
+					// decending order of the sizes of pieces
+					for(int k = Piece.pieces.length - 1; k >= 0; k--) {
+						if(game.getPlayer(myId).holds(k)) {
+							Piece piece = Piece.pieces[k];
+
+							ArrayList<Solution> solve = findPoses(available, i, j, piece, k);
+							if(solve != null) {
+								sols.addAll(solve);
+							}
+						}
+					}
+				}
+			}
+		}
+		// 置けるピースのエッジを数える
+		// いらない？
+//		for (int i = 0;i < sols.size();i++) {
+//			Solution s = sols.get(i);
+//			int sEdge = getNumberOfEdge(Piece.pieces[s.piece].getFigure(s.pose));
+//		}
+		// 置けるピースを場に置いた時の使えるエッジを数える
+		// 最善を返す
+		int bestEdge = -1;
+		Solution bestSol = null;
+		for (int i = 0;i < sols.size();i++) {
+			int[][] boardClone = setBlock(board,sols.get(i),myId);//ボードに仮置きする操作
+			int boardEdge = getBoardEdge(boardClone, myId);
+			if (boardEdge>bestEdge) {
+				bestEdge = boardEdge;
+				bestSol = sols.get(i);
+			}
+		}
+		if (bestSol != null) {
+			return bestSol;
+		}
+		return null;
+	}
+	/**
+	 * findFirst改変．
+	 *置ける姿勢全部を返す．
+	 * @param available
+	 * @param row
+	 * @param col
+	 * @param piece
+	 * @param pieceId
+	 * @return
+	 */
+	protected ArrayList<Solution> findPoses(int[][] available, int row, int col, Piece piece, int pieceId) {
+		double width = piece.figure.length;
+		ArrayList<Solution> s = new ArrayList<Solution>();
+		if(piece.figure[0].length > width) {
+			width = piece.figure[0].length;
+		}
+
+		for(int pose = 0; pose < 8; pose++) {
+			int[][] figure = piece.getFigure(pose);
+			int h = figure.length;
+			int w = figure[0].length;
+			for(int i = row - h + 1; i <= row; i++) {
+				if(i < 0 || i + h - 1 >= 20) continue;
+
+				for(int j = col - w + 1; j <= col; j++) {
+					if(j < 0 || j + w - 1 >= 20) continue;
+
+					if(isValid(available, figure, i, j)) {
+						Solution solution = new Solution(pieceId, pose, j, i);
+						s.add(solution);
+					}
+				}
+			}
+		}
+		if (s.size()>0) {
+			return s;
+		}
+		return null;
+	}
+
+	protected int[][] getPieceEdge(int[][] figure) {
+		// ピース1つを入力して各Blockのエッジ数を返す
+		int[][] figureEdge = new int[figure.length][figure[0].length];
+		int count = 0;
+		for (int i = 0;i < figure.length;i++) {
+			for (int j = 0;j < figure[i].length;j++) {
+				if (figure[i][j] != 0) {
+					int[] neighbor = new int[4];
+					count = 0;
+					for(int m = -1; m <= 1; m += 2) {
+						int ii = i + m;
+						if(ii >= 0 && ii < figure.length) {
+							if(figure[ii][j] != 0) {
+								neighbor[m+1] = 1;
+							}
+						}
+
+						int jj = j + m;
+						if(jj >= 0 && jj < figure[i].length) {
+							if(figure[i][jj] != 0) {
+								neighbor[m+2] = 1;
+							}
+						}
+					}
+					for (int n = 0;n < 4;n++) {
+						if ((1-neighbor[n])*(1-neighbor[(n+1)%4]) != 0){
+							count++;
+						}
+					}
+					figureEdge[i][j] = count;
+				}
+			}
+		}
+//		for(int i = 0;i < figureEdge.length;i++) {
+//			for (int j = 0;j < figureEdge[i].length;j++) {
+//				System.out.print(figureEdge[i][j]+" ");
+//			}
+//			System.out.println();
+//		}
+//		System.out.println();
+		return figureEdge;
+	}
+	/**
+	 * 盤面に自分のエッジがいくつあるか返す<br>
+	 * 自分のだけでエッジを探索する<br>
+	 * 自分のエッジの対角方向に人のIDがなければ使えるエッジである
+	 * @param board
+	 * @param myId
+	 * @return
+	 */
+	protected int getBoardEdge(int[][] board, int myId) {
+		int edge = 0;
+		int count = 0;
+		int idx = 0;
+		for (int i = 0;i < 20-1;i++) {//ブロックでなくgridpointを見る
+			for (int j = 0;j < 20-1;j++) {
+				count = 0;
+				for (int k = 0;k < 2;k++) {//頂点に接する4ブロック
+					for (int l = 0;l < 2;l++) {
+						if (board[i+k][j+l] == myId) {
+							count++;
+							idx = 2*k+l;
+						}
+					}
+				}
+				if (count == 1 && board[i+(1-idx/2)][j+(1-idx%2)] == -1) {
+					edge++;
+				}
+			}
+		}
+		return edge;
+	}
+	/**
+	 * Game.javaのputPieceを利用<br>
+	 * 盤面に1つ仮置きする
+	 * @param board
+	 * @param s
+	 * @param myId
+	 * @return
+	 */
+	protected int[][] setBlock(int[][] board, Solution s, int myId) {
+		int r=board.length, c = board[0].length;
+		int[][] boardClone = new int[r][c];
+		for (int i = 0;i < r;i++) {
+			for (int j = 0;j < c;j++) {
+				boardClone[i][j] = board[i][j];
+			}
+		}
+		int[][] fig = (Piece.pieces[s.piece].getFigure(s.pose));
+		for(int i = 0; i < fig.length; i++) {
+			for(int j = 0; j < fig[i].length; j++) {
+				if(fig[i][j] == 1) {
+					int ii = topLeft[0][1] + (s.y + i) * transform[0][3] + (s.x + j) * transform[0][1];
+					int jj = topLeft[0][0] + (s.y + i) * transform[0][2] + (s.x + j) * transform[0][0];
+//					System.out.println("("+ii+","+jj+")");
+					if (boardClone[ii][jj] == -1) {
+						boardClone[ii][jj] = myId;
+					}else {
+						System.out.println("Error! this place cannot set block");
+					}
+				}
+			}
+		}
+		return boardClone;
+	}
+	/** transform matrix for main board
+	 * Game.javaのコピー
+	 * */
+	private int[][] transform = {
+			{ 1, 0, 0, 1 },
+			{ 0, -1, 1, 0 },
+			{ -1, 0, 0, -1 },
+			{ 0, 1, -1, 0 }
+	};
+	/** top left position for each player */
+	private int[][] topLeft = {
+			{ 0, 0 },
+			{ 0, 19 },
+			{ 19, 19 },
+			{ 19, 0 }
+	};
 	
 	public boolean isValid(int[][] available, int[][] figure, int row, int col) {
 		boolean edge = false;
