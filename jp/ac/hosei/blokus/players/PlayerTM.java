@@ -45,7 +45,7 @@ public class PlayerTM extends ClientController {
 		}
 
 		Solution first;
-		if (countFilledBlocks(board) == 0) {
+		if (countFilledBlocks(board) <= 15) {
 			count = 0;
 		}
 		if (countFilledBlocks(board)<70) {// 序盤
@@ -57,9 +57,9 @@ public class PlayerTM extends ClientController {
 			System.out.println("中盤");
 			System.out.println(count);
 			first = findDistant(myId,available); //遠くてかつ長いのを出す
-			if(count > 8) {
+			if(count > 9) {
 				first = findEdgeSolution(myId,available, board);
-			} else if(count > 13) {
+			} else if(count > 14) {
 				first = findDistant2(myId,available); //遠いいところに出す
 			}
 //			first = findDistant2(myId,available); //遠いいところに出す
@@ -91,7 +91,11 @@ public class PlayerTM extends ClientController {
 		        Piece piece = Piece.pieces[k]; 
 		        Solution solve = findFirst(available, i, j, piece, k); 
 		        count = count + 1; 
-		        return solve; 
+		        if (solve != null) { 
+			         return solve; 
+			        } else {
+			        	return findDistant(myId,available);
+			   }
 		       } else if (k == 13 && count == 1 && i + j == 19) { 
 		        System.out.println("2手目"); 
 		        Piece piece = Piece.pieces[k]; 

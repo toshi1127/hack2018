@@ -1,12 +1,6 @@
 package jp.ac.hosei.blokus.utils;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
@@ -414,6 +408,16 @@ public class Canvas {
 		File file = new File(fileName);
 		drawImage(round(x), round(y), file);
 	}
+	/**
+	 * ファイルで指定した画像の描画
+	 * @param x 左上のX座標
+	 * @param y 左上のY座標
+	 * @param fileName 画像ファイル名
+	 */
+	public void drawImageCenterTop(double x, double y, String fileName) {
+		File file = new File(fileName);
+		drawImageCenterTop(round(x), round(y), file);
+	}
 
 	/**
 	 * ファイルで指定した画像の描画
@@ -425,6 +429,24 @@ public class Canvas {
 		try {
 			BufferedImage im = ImageIO.read(file);
 			g.drawImage(im, round(x), round(y), null);
+			if(repaintFlag) {
+				panel.repaint();
+			}
+		} catch (Exception e) {
+			System.err.println(file.getName() + "はオープンできません");
+		}
+	}
+	/**
+	 * ファイルで指定した画像の描画
+	 * @param x 左上のX座標
+	 * @param y 左上のY座標
+	 * @param fileName 画像ファイルオブジェクト
+	 */
+	public void drawImageCenterTop(double x, double y, File file) {
+		try {
+			BufferedImage im = ImageIO.read(file);
+			int imageWidth = im.getWidth();
+			g.drawImage(im, round(x-imageWidth/2), round(y), null);
 			if(repaintFlag) {
 				panel.repaint();
 			}
